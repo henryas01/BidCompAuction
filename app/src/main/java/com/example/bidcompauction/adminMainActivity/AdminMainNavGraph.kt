@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.bidcompauction.adminMainActivity.bids.BidsScreen
 import com.example.bidcompauction.adminMainActivity.flashsale.FlashSaleScreen
 import com.example.bidcompauction.adminMainActivity.invoices.InvoicesScreen
 import com.example.bidcompauction.adminMainActivity.products.ProductsScreen
-import com.example.bidcompauction.adminMainActivity.winnersBit.WinnersScreen
 
 @Composable
 fun AdminMainNavGraph(
@@ -28,8 +28,8 @@ fun AdminMainNavGraph(
                 search = search
             )
         }
-        composable(AdminRoute.WINNERS) {
-            WinnersScreen(
+        composable(AdminRoute.BIDS) {
+            BidsScreen(
                 search = search
             )
         }

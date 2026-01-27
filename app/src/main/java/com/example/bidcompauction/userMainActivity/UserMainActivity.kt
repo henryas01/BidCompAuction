@@ -7,8 +7,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
+import com.example.bidcompauction.utils.AuthManager
+import com.example.bidcompauction.utils.NavigationUtils
 
 class UserMainActivity : ComponentActivity() {
+
+    private val authManager by lazy { AuthManager(this) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -27,7 +31,7 @@ class UserMainActivity : ComponentActivity() {
                     UserMainNavGraph(
                         onLogout = {
                             // TODO clear session
-                            finish() // balik ke LoginActivity
+                            NavigationUtils.logoutAndRedirect(authManager, this@UserMainActivity)
                         }
                     )
                 }
@@ -35,3 +39,4 @@ class UserMainActivity : ComponentActivity() {
         }
     }
 }
+

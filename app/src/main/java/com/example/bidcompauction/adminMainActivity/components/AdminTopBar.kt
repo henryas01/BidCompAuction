@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -22,7 +21,6 @@ fun AdminTopBar(
     currentRoute: String,
     search: String,
     onSearchChange: (String) -> Unit,
-    onAdd: () -> Unit,
     onLogout: () -> Unit
 ) {
     Column(
@@ -38,7 +36,7 @@ fun AdminTopBar(
                         when (currentRoute) {
                             AdminRoute.PRODUCTS -> "Manage Products"
                             AdminRoute.FLASHSALE -> "Manage Flash Sale"
-                            AdminRoute.WINNERS -> "Pick Bid Winners"
+                            AdminRoute.BIDS -> "Pick Bid Winners"
                             AdminRoute.INVOICES -> "User Invoices"
                             else -> "Dashboard"
                         },
@@ -48,12 +46,6 @@ fun AdminTopBar(
                 }
             },
             actions = {
-                val showAdd = currentRoute == AdminRoute.PRODUCTS || currentRoute == AdminRoute.FLASHSALE
-                if (showAdd) {
-                    IconButton(onClick = onAdd) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
                 IconButton(onClick = { /* TODO admin settings */ }) {
                     Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
                 }

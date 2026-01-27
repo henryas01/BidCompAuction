@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.foundation)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -62,6 +63,8 @@ dependencies {
 
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.navigation:navigation-compose:2.8.0")
+
+
 
     /* ---------------- Icons ---------------- */
     implementation("androidx.compose.material:material-icons-extended")
@@ -74,6 +77,10 @@ dependencies {
     /* ---------------- Networking ---------------- */
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-rc01")
 
     /* ---------------- Coroutines ---------------- */
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")

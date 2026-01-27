@@ -18,4 +18,26 @@ data class FlashSaleUi(
     val imageRes: Int
 )
 
-enum class MainTab { Home, Checkout, Invoice }
+enum class BidStatus {
+    LEADING,    // Penawaran tertinggi saat ini
+    OUTBID,     // Sudah disalip orang lain
+    WINNING,    // Lelang berakhir & terpilih oleh admin
+    LOST        // Lelang berakhir & tidak terpilih
+}
+
+data class MyBidUi(
+    val id: String,
+    val productName: String,
+    val myLastBid: Long,
+    val currentHighestBid: Long,
+    val status: BidStatus,
+    val imageUrl: Int
+)
+
+data class BidState(
+    val product: FlashSaleUi,
+    val currentBid: Long,
+    val myBid: Long = currentBid + 50_000
+)
+
+enum class MainTab { Home, MyBids, Checkout, Invoice }

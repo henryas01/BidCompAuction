@@ -7,3 +7,12 @@ data class InvoiceAdminUi(
     val status: String,
     val date: String
 )
+
+
+data class AdminInvoice(
+    val id: String,
+    val customerName: String,
+    val productName: String,
+    val amount: Long,
+    val date: String
+)

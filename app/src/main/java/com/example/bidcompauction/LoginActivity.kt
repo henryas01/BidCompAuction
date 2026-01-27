@@ -1,6 +1,7 @@
 package com.example.bidcompauction
 
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -31,32 +31,63 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.ui.theme.BidTheme
+import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.bidcompauction.data.viewmodel.LoginState
+import com.example.bidcompauction.data.viewmodel.LoginViewModel
+import com.example.bidcompauction.utils.AuthManager
+import com.example.bidcompauction.utils.NavigationUtils
 
 class LoginActivity : ComponentActivity() {
+
+    private val authManager by lazy { AuthManager(this) }
+    private val viewModel: LoginViewModel by viewModels { LoginViewModel.Factory(authManager) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (authManager.isLoggedIn()) {
+            NavigationUtils.navigateToDashboard(this, authManager)
+            return
+        }
+
         setContent {
             BidTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
-                    LoginScreen(
-                        onLogin = { email, password ->
-                            // TODO: handle login
-                        },
-                        onForgotPassword = {
-                            // TODO: navigate to forgot password
-                        },
-                        onSignUp = {
-                            // TODO: navigate to sign up
+                val state by viewModel.loginState.collectAsState()
+
+                // Handle Side Effects (Navigasi & Toast)
+                LaunchedEffect(state) {
+                    when (state) {
+                        is LoginState.Success -> {
+                            NavigationUtils.navigateToDashboard(this@LoginActivity, authManager)
                         }
-                    )
+                        is LoginState.Error -> {
+                            Toast.makeText(this@LoginActivity, (state as LoginState.Error).message, Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
+                    }
                 }
+
+                LoginScreen(
+                    isLoading = state is LoginState.Loading,
+                    onLogin = { email, password ->
+                        viewModel.login(email, password)
+                    },
+                    onForgotPassword = { /* Handle */ },
+                    onSignUp = {
+                        startActivity(Intent(this, SignUpActivity::class.java))
+                    }
+                )
             }
         }
     }
 }
-
 @Composable
 fun LoginScreen(
+    isLoading: Boolean,
     onLogin: (String, String) -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
@@ -171,11 +202,10 @@ fun LoginScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // --- BUTTONS ---
             Button(
                 onClick = { onLogin(email.trim(), password) },
-                enabled = email.isNotBlank() && password.isNotBlank(),
-                shape = RoundedCornerShape(16.dp), // Sedikit kotak agar tegas
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank(), // Disable saat loading
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.Black
@@ -184,7 +214,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                Text("LOGIN ACCOUNT", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("LOGIN ACCOUNT", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -200,7 +234,6 @@ fun LoginScreen(
 
             Spacer(Modifier.weight(1f))
 
-            // --- BOTTOM IMAGE (GPU) ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -235,9 +268,9 @@ private fun RoundedTextField(
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
-        shape = RoundedCornerShape(12.dp), // Konsisten dengan tombol
+        shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0x1AFFFFFF), // Abu-abu gelap transparan
+            focusedContainerColor = Color(0x1AFFFFFF),
             unfocusedContainerColor = Color(0x0DFFFFFF),
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
@@ -254,6 +287,7 @@ private fun RoundedTextField(
 fun LoginScreenPreview() {
     BidTheme {
         LoginScreen(
+            isLoading = false,
             onLogin = { _, _ -> },
             onForgotPassword = {},
             onSignUp = {}

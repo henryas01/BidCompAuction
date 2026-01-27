@@ -1,5 +1,6 @@
 package com.example.bidcompauction
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,17 +29,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.ui.theme.BidTheme
+import com.example.bidcompauction.utils.AuthManager
+import com.example.bidcompauction.utils.NavigationUtils
 
 class OpeningActivity : ComponentActivity() {
+
+    private val authManager by lazy { AuthManager(this) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // checks if have been login
+        if (authManager.isLoggedIn()) {
+            NavigationUtils.navigateToDashboard(this, authManager)
+            return
+        }
+
         setContent {
             BidTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     OpeningScreen(
                         onLoginClick = {
-                            // TODO: navigate to LoginActivity / LoginScreen
-                            // startActivity(Intent(this, LoginActivity::class.java))
+                             startActivity(Intent(this, LoginActivity::class.java))
                         }
                     )
                 }

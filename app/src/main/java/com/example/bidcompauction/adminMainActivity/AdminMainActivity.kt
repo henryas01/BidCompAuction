@@ -4,8 +4,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Color
+import com.example.bidcompauction.utils.AuthManager
+import com.example.bidcompauction.utils.NavigationUtils
 
 class AdminMainActivity : ComponentActivity() {
+    private val authManager by lazy { AuthManager(this) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -23,8 +26,7 @@ class AdminMainActivity : ComponentActivity() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     AdminMainScreen(
                         onLogout = {
-                            // TODO: clear session & go to login
-                            finish()
+                            NavigationUtils.logoutAndRedirect(authManager, this@AdminMainActivity)
                         }
                     )
                 }

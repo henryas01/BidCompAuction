@@ -1,5 +1,6 @@
 package com.example.bidcompauction.userMainActivity.checkout.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,70 +18,118 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.userMainActivity.UserMainUtils.formatRupiah
 import com.example.bidcompauction.userMainActivity.checkout.CartItemUi
+import utils.Constants
+import com.example.bidcompauction.R
+import coil3.compose.AsyncImage
+
+import androidx.compose.material.icons.filled.DeleteOutline
+
+
+
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun CartItemCard(
     item: CartItemUi,
     onIncrease: () -> Unit,
-    onDecrease: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF101010)),
-        elevation = CardDefaults.cardElevation(6.dp)
+    onDecrease: () -> Unit,
+    onRemove: () -> Unit
+){
+    val imageUrl = Constants.getFullImageUrl(item.imageUrl)
+
+    Surface(
+        color = Color(0xFF1A1A1A),
+        shape = RoundedCornerShape(20.dp), // Radius lebih lembut
+        border = BorderStroke(1.dp, Color(0xFF252525)), // Outline tipis agar lebih mewah
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // --- IMAGE ---
             Box(
                 modifier = Modifier
-                    .size(70.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF0D0D0D))
+                    .size(85.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFF101010))
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
-                    contentDescription = item.name,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize().padding(8.dp)
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(R.drawable.ic_placeholder)
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
 
+            // --- INFO (Nama & Harga) ---
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.name, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(4.dp))
                 Text(
-                    formatRupiah(item.price),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    text = item.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = formatRupiah(item.price),
+                    color = Color(0xFFFFD700), // Warna Gold Auction
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            // --- ACTIONS (Qty & Delete) ---
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Tombol Hapus Kecil di Atas
                 IconButton(
-                    onClick = onDecrease,
-                    enabled = item.qty > 1
+                    onClick = onRemove,
+                    modifier = Modifier.size(28.dp)
                 ) {
-                    Icon(Icons.Filled.Remove, contentDescription = "Decrease")
+                    Icon(
+                        imageVector = Icons.Default.DeleteSweep,
+                        contentDescription = "Remove",
+                        tint = Color(0xFFFF5252).copy(alpha = 0.8f),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
-                Text(
-                    text = item.qty.toString(),
-                    modifier = Modifier.width(24.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
+                // Quantity Control yang lebih Slim
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(Color(0xFF252525), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 2.dp)
+                ) {
+                    IconButton(onClick = onDecrease, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Remove, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    }
 
-                IconButton(onClick = onIncrease) {
-                    Icon(Icons.Filled.Add, contentDescription = "Increase")
+                    Text(
+                        text = item.qty.toString(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+
+                    IconButton(onClick = onIncrease, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    }
                 }
             }
         }

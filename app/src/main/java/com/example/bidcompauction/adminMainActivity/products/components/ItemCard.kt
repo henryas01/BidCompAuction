@@ -1,8 +1,10 @@
 package com.example.bidcompauction.adminMainActivity.products.components
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -11,140 +13,171 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import com.example.bidcompauction.R
 import com.example.bidcompauction.adminMainActivity.formatRupiah
-import com.example.bidcompauction.adminMainActivity.products.AdminProduct
+import data.model.AdminProductResponse
+import utils.Constants
+
 @Composable
 fun ItemCard(
-    product: AdminProduct,
+    product: AdminProductResponse, // Menambahkan koma yang hilang
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    // Alamat dasar server untuk gambar
+//    val baseUrl = "http://192.168.1.10:3000"
+//    val imageUrl = if (product.images.isNotEmpty()) "$baseUrl${product.images.first()}" else ""
+    val imageUrl = Constants.getFullImageUrl(product.images.firstOrNull())
+//    print("product.images, $product.images")
+    Log.d("imageUrl = imageUrl", "URL Gambar: $imageUrl")
+    Log.d("imageUrl = ItemCard", "URL Gambar: $product.images")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp), // Memberi sedikit ruang napas
-        shape = RoundedCornerShape(24.dp), // Lebih bulat agar modern
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), // Flat design seringkali lebih bersih
-        border = BorderStroke(1.dp, Color(0x1AFFFFFF)) // Border tipis untuk depth
+            .height(135.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF141414)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .height(IntrinsicSize.Min), // Menyeimbangkan tinggi konten
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Image dengan shadow/glow tipis
+        Row(modifier = Modifier.fillMaxSize()) {
+
             Box(
                 modifier = Modifier
-                    .size(90.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .width(115.dp)
+                    .fillMaxHeight()
             ) {
-                Image(
-                    painter = painterResource(product.imageRes),
+                AsyncImage(
+                    model = imageUrl,
                     contentDescription = product.name,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.ic_placeholder),
+                    error = painterResource(R.drawable.ic_placeholder)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(Color.Transparent, Color(0xFF141414)),
+                                startX = 0f
+                            )
+                        )
                 )
             }
 
-            Spacer(Modifier.width(16.dp))
-
-            // Main content
+            // --- TENGAH: INFO KONTEN ---
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .fillMaxHeight()
+                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                verticalArrangement = Arrangement.Center
             ) {
-                Column {
-                    Text(
-                        text = product.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = product.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.6f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                Text(
+                    text = product.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = product.desc, // Diubah dari .description ke .desc
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 10.sp,
+                    lineHeight = 13.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                // Harga (Mengonversi 'Any' ke Long/String untuk formatRupiah)
+                val priceLong = when(val p = product.price) {
+                    is Number -> p.toLong()
+                    is String -> p.toLongOrNull() ?: 0L
+                    else -> 0L
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = formatRupiah(product.price),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                Text(
+                    text = formatRupiah(priceLong),
+                    color = Color(0xFF00FF85),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 15.sp,
+                    letterSpacing = (-0.5).sp
+                )
 
+                Spacer(Modifier.height(8.dp))
 
-                }
-                // Badge Stock yang lebih minimalis
+                // Badge Stok (Diubah dari .qty ke .stock)
                 Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(8.dp)
+                    color = if (product.stock > 5) Color(0xFF00FF85).copy(0.12f) else Color(0xFFFF4444).copy(0.12f),
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(0.5.dp, if (product.stock > 5) Color(0xFF00FF85).copy(0.3f) else Color(0xFFFF4444).copy(0.3f))
                 ) {
                     Text(
-                        text = "Stok: ${product.qty}",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "STOCK: ${product.stock}",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        color = if (product.stock > 5) Color(0xFF00FF85) else Color(0xFFFF4444),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
 
-            Spacer(Modifier.width(12.dp))
-
-            // Vertical Actions (Lebih ringkas)
+            // --- SISI KANAN: ACTION BUTTONS ---
             Column(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(50.dp)
+                    .padding(vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(
+                Surface(
                     onClick = onEdit,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color(0xFF2D2D2D)
-                    ),
-                    modifier = Modifier.size(36.dp)
+                    shape = CircleShape,
+                    color = Color(0xFF222222),
+                    modifier = Modifier.size(36.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                 ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Edit,
+                            null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
 
-                IconButton(
+                Surface(
                     onClick = onDelete,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color(0x1AFF4444)
-                    ),
-                    modifier = Modifier.size(36.dp)
+                    shape = CircleShape,
+                    color = Color(0xFFFF4444).copy(alpha = 0.1f),
+                    modifier = Modifier.size(36.dp),
+                    border = BorderStroke(1.dp, Color(0xFFFF4444).copy(alpha = 0.2f))
                 ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = Color(0xFFFF4444),
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Delete,
+                            null,
+                            tint = Color(0xFFFF4444),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }

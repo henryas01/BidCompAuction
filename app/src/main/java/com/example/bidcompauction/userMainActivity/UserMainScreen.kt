@@ -1,64 +1,86 @@
 package com.example.bidcompauction.userMainActivity
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.R
 import com.example.bidcompauction.userMainActivity.components.*
 
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import data.model.AdminProductResponse
+import data.viewmodel.ProductViewModel
+
+import com.example.bidcompauction.userMainActivity.checkout.CartItemUi // Pastikan import ini ada
+import data.model.AdminFlashSaleResponse
+import data.viewmodel.BidsViewModel
+import data.viewmodel.FlashSaleViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserMainScreen(
     onOpenNotifications: () -> Unit,
     onOpenProfile: () -> Unit,
     onLogout: () -> Unit,
-    onCheckout: () -> Unit,
-    onInvoice: () -> Unit
+    onCheckout: (List<CartItemUi>) -> Unit,
+    onInvoice: () -> Unit,
+    // FIX: Sesuaikan parameter agar konsisten dengan pemanggilan di bawah
+    onOpenMyBids: () -> Unit,
+    productViewModel: ProductViewModel = viewModel(),
+    flashSaleViewModel: FlashSaleViewModel = viewModel(),
+    bidsViewModel: BidsViewModel = viewModel()
 ) {
+    // --- State Management ---
+    val products by productViewModel.products.collectAsState()
+    var cartItems by remember { mutableStateOf(listOf<CartItemUi>()) }
+
+    val flashSales by flashSaleViewModel.items.collectAsState()
+    val isLoadingProducts by productViewModel.isLoading.collectAsState()
+    val isLoadingFlash by flashSaleViewModel.isLoading.collectAsState()
+
+    // State Loading dari Bids API
+    val isBidding by bidsViewModel.isLoading.collectAsState()
+
     val notifCount = remember { mutableIntStateOf(3) }
-
-    val now = remember { System.currentTimeMillis() }
-
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-
-    val products = remember {
-        listOf(
-            ProductUi("p1", "RTX 3060 Ti", 4_200_000, 8, R.drawable.gpu),
-            ProductUi("p2", "SSD NVMe 1TB", 950_000, 24, R.drawable.gpu),
-            ProductUi("p3", "RAM DDR4 16GB", 550_000, 40, R.drawable.gpu),
-            ProductUi("p4", "PSU 650W Gold", 1_200_000, 12, R.drawable.gpu),
-            ProductUi("p5", "Monitor 144Hz", 2_100_000, 7, R.drawable.gpu),
-            ProductUi("p6", "Cooling AIO 240", 1_350_000, 9, R.drawable.gpu),
-        )
-    }
-
-    val flashSales = remember {
-        listOf(
-            FlashSaleUi("f1", "RTX 4070 SUPER", 11_500_000, 9_999_000, 3, now + 45 * 60_000L, R.drawable.gpu),
-            FlashSaleUi("f2", "SSD NVMe 2TB", 1_750_000, 1_399_000, 10, now + 20 * 60_000L, R.drawable.gpu),
-            FlashSaleUi("f3", "Mechanical Keyboard", 650_000, 499_000, 15, now + 75 * 60_000L, R.drawable.gpu),
-        )
-    }
-
     var search by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(MainTab.Home) }
 
+    // Fetch data saat layar dibuka
+    LaunchedEffect(Unit) {
+        productViewModel.fetchProducts()
+        flashSaleViewModel.fetchFlashSales()
+    }
+
+    // Filter produk
     val filteredProducts = remember(search, products) {
         val q = search.trim().lowercase()
-        if (q.isEmpty()) products else products.filter {
-            it.name.lowercase().contains(q)
-        }
+        if (q.isEmpty()) products else products.filter { it.name.lowercase().contains(q) }
     }
+
+    // State untuk Bid
+    var selectedBidItem by remember { mutableStateOf<AdminFlashSaleResponse?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -77,35 +99,92 @@ fun UserMainScreen(
                 onSelect = { tab ->
                     selectedTab = tab
                     when (tab) {
-                        MainTab.Home -> Unit
-                        MainTab.Checkout -> onCheckout()
+                        MainTab.Checkout -> onCheckout(cartItems)
+                        MainTab.MyBids -> onOpenMyBids() // Memanggil tanpa parameter
                         MainTab.Invoice -> onInvoice()
+                        else -> Unit
                     }
                 }
             )
         }
     ) { padding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFF0B0B0B),
-                            Color(0xFF0F0F0F),
-                            Color(0xFF0B0B0B)
-                        )
-                    )
-                )
+                .background(Brush.verticalGradient(listOf(Color(0xFF0B0B0B), Color(0xFF161616), Color(0xFF0B0B0B))))
         ) {
-            HomeContent(
-                flashSales = flashSales,
-                products = filteredProducts
-            )
+            if (isLoadingProducts && products.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFFFFD700))
+            } else {
+                HomeContent(
+                    flashSales = flashSales,
+                    products = filteredProducts,
+                    onFlashSaleClick = { selectedBidItem = it },
+                    onAddToCart = { product ->
+                        val newItem = CartItemUi(
+                            id = product.id.toString(),
+                            name = product.name,
+                            price = (product.price.toString().toDoubleOrNull() ?: 0.0).toLong(),
+                            imageUrl = product.images.firstOrNull() ?: "",
+                            qty = 1
+                        )
+                        val existingIndex = cartItems.indexOfFirst { it.id == newItem.id }
+                        if (existingIndex != -1) {
+                            cartItems = cartItems.toMutableList().apply {
+                                this[existingIndex] = this[existingIndex].copy(qty = this[existingIndex].qty + 1)
+                            }
+                        } else {
+                            cartItems = cartItems + newItem
+                        }
+                    }
+                )
+            }
+
+            // Loading Overlay saat proses POST Bid ke server
+            if (isBidding) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .clickable(enabled = false) {} // Mencegah klik tembus ke bawah
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFFFFD700))
+                }
+            }
+        }
+
+        // --- Bid Bottom Sheet (Hanya Satu yang Menggunakan API) ---
+        if (selectedBidItem != null) {
+            ModalBottomSheet(
+                onDismissRequest = { selectedBidItem = null },
+                sheetState = sheetState,
+                containerColor = Color(0xFF1C1C1C),
+                scrimColor = Color.Black.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                BidBottomSheetContent(
+                    item = selectedBidItem!!,
+                    onConfirmBid = { bidValue ->
+                        // Gunakan BidsViewModel (Integrasi API)
+                        selectedBidItem?.let { item ->
+                            bidsViewModel.placeBid(
+                                flashSaleId = item.id,
+                                bidPrice = bidValue,
+                                onSuccess = {
+                                    selectedBidItem = null
+                                    selectedTab = MainTab.MyBids
+                                    onOpenMyBids()
+                                }
+                            )
+                        }
+                    }
+                )
+            }
         }
     }
+
+    // Logout Dialog
     LogoutConfirmDialog(
         open = showLogoutDialog,
         onDismiss = { showLogoutDialog = false },
@@ -113,12 +192,15 @@ fun UserMainScreen(
     )
 }
 
-/* ---------------- HOME CONTENT ---------------- */
+/* ---------------- UI COMPONENTS ---------------- */
 
 @Composable
 private fun HomeContent(
-    flashSales: List<FlashSaleUi>,
-    products: List<ProductUi>
+    flashSales: List<AdminFlashSaleResponse>,
+    products: List<AdminProductResponse>,
+    // FIX: Ubah parameter agar menerima AdminFlashSaleResponse, bukan FlashSaleUi
+    onFlashSaleClick: (AdminFlashSaleResponse) -> Unit,
+    onAddToCart: (AdminProductResponse) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -127,36 +209,38 @@ private fun HomeContent(
     ) {
         Spacer(Modifier.height(12.dp))
 
-        SectionHeader(
-            title = "Flash Sale",
-            subtitle = "Limited time deals"
-        )
+        SectionHeader(title = "Flash Sale", subtitle = "Live Auction")
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(end = 6.dp)
+            contentPadding = PaddingValues(end = 8.dp)
         ) {
+            // Menggunakan key agar recomposition lebih efisien
             items(flashSales, key = { it.id }) { item ->
-                FlashSaleCard(item = item)
+                FlashSaleCard(
+                    item = item,
+                    // Sekarang tipe data sudah sinkron
+                    onBidClick = { onFlashSaleClick(item) }
+                )
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(20.dp))
 
-        SectionHeader(
-            title = "Recommended",
-            subtitle = "${products.size} items"
-        )
+        SectionHeader(title = "Recommended", subtitle = "${products.size} items")
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(bottom = 80.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             items(products, key = { it.id }) { p ->
-                ProductCard(p = p)
+                ProductCard(
+                    p = p,
+                    onAdd = { onAddToCart(p) }
+                )
             }
         }
     }

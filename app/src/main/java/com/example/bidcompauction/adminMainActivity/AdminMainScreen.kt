@@ -32,9 +32,6 @@ fun AdminMainScreen(
                 currentRoute = currentRoute,
                 search = search,
                 onSearchChange = { search = it },
-                onAdd = {
-                    // handled in each screen later (via events/ViewModel)
-                },
                 onLogout = onLogout
             )
         },
