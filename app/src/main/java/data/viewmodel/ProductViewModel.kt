@@ -1,6 +1,7 @@
 package data.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -41,53 +42,68 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun addProduct(request: AdminProductRequest) { // Pastikan menerima objek request
+    // --- ADD PRODUCT ---
+    fun addProduct(context: Context, name: String, price: Long, stock: Int, desc: String, imageUri: Uri?) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                // 1. Ambil URI dari request, jika null batalkan (atau beri peringatan)
-                val imageUri = request.imageUri ?: return@launch
+                val namePart = name.toRequestBody("text/plain".toMediaTypeOrNull())
+                val pricePart = price.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val stockPart = stock.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val descPart = desc.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                // 2. Konversi Uri ke File menggunakan FileUtil
-                val file = FileUtil.getFileFromUri(getApplication(), imageUri)
-                val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                val bodyImage = MultipartBody.Part.createFormData("images", file.name, requestFile)
+                val imagePart = imageUri?.let { uri ->
+                    val file = FileUtil.getFileFromUri(context, uri)
+                    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    MultipartBody.Part.createFormData("images", file.name, requestFile)
+                }
 
-                // 3. Konversi String ke RequestBody (Format Multipart)
-                val namePart = request.name.toRequestBody("text/plain".toMediaTypeOrNull())
-                val pricePart = request.price.toRequestBody("text/plain".toMediaTypeOrNull())
-                val stockPart = request.stock.toRequestBody("text/plain".toMediaTypeOrNull())
-                val descPart = request.desc.toRequestBody("text/plain".toMediaTypeOrNull())
+                if (imagePart != null) {
+                    RetrofitClient.api.addProduct(getAuthHeader(), namePart, pricePart, stockPart, descPart, imagePart)
+                    fetchProducts()
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+            _isLoading.value = false
+        }
+    }
 
-                // 4. Kirim ke API
-                RetrofitClient.api.addProduct(
+    // --- UPDATE PRODUCT (PATCH) ---
+    fun updateProduct(context: Context, id: Int, name: String, price: Long, stock: Int, desc: String, imageUri: Uri?) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Konversi data ke RequestBody
+                val namePart = name.toRequestBody("text/plain".toMediaTypeOrNull())
+                val pricePart = price.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val stockPart = stock.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val descPart = desc.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                // Part gambar opsional
+                val imagePart = imageUri?.let { uri ->
+                    val file = FileUtil.getFileFromUri(context, uri)
+                    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    MultipartBody.Part.createFormData("images", file.name, requestFile)
+                }
+
+                // Perbaikan: Gunakan getAuthHeader() bukan variabel token yang tidak ada
+                val response = RetrofitClient.api.updateProduct(
                     token = getAuthHeader(),
+                    id = id,
                     name = namePart,
                     price = pricePart,
                     stock = stockPart,
                     desc = descPart,
-                    image = bodyImage
+                    image = imagePart
                 )
 
-                // 5. Refresh data setelah sukses
-                fetchProducts()
+                if (response.isSuccessful) {
+                    fetchProducts() // Refresh list setelah update
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _isLoading.value = false
             }
-        }
-    }
-
-    fun updateProduct(id: Int, name: String, price: Long, stock: Int, desc: String) {
-        viewModelScope.launch {
-            try {
-                val body = mapOf(
-                    "name" to name,
-                    "price" to price,
-                    "stock" to stock,
-                    "desc" to desc
-                )
-                RetrofitClient.api.updateProduct(getAuthHeader(), id, body)
-                fetchProducts()
-            } catch (e: Exception) { e.printStackTrace() }
         }
     }
 

@@ -43,7 +43,7 @@ fun AdminFlashSaleDialog(
     open: Boolean,
     initial: AdminFlashSaleResponse?,
     onDismiss: () -> Unit,
-    onSave: (AdminFlashSaleResponse) -> Unit
+    onSave: (AdminFlashSaleResponse, Uri?) -> Unit
 ) {
     if (!open || initial == null) return
 
@@ -55,7 +55,7 @@ fun AdminFlashSaleDialog(
     var name by remember(initial) { mutableStateOf(initial.name) }
     var price by remember(initial) { mutableStateOf(initial.price.toString()) }
     var qty by remember(initial) { mutableStateOf(initial.stock.toString()) }
-    var desc by remember(initial) { mutableStateOf(initial.desc) }
+    var descriptions by remember(initial) { mutableStateOf(initial.descriptions) }
 
     // Formatter & Date State
     // --- Formatter Section ---
@@ -153,9 +153,11 @@ fun AdminFlashSaleDialog(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        val imageUrl = if (initial.images.isNotEmpty()) {
-                            Constants.getFullImageUrl(initial.images[0])
-                        } else null
+                        val imageUrl = if (!initial.images.isNullOrEmpty()) {
+                            Constants.getFullImageUrl(initial.images.lastOrNull())
+                        } else {
+                            null
+                        }
 
                         AsyncImage(
                             model = selectedImageUri ?: imageUrl,
@@ -196,7 +198,7 @@ fun AdminFlashSaleDialog(
                         showDateTimePicker(endDate) { endDate = it }
                     }
 
-                    AdminTextField(value = desc, onValueChange = { desc = it }, label = "Description", isMultiLine = true)
+                    AdminTextField(value = descriptions ?:"", onValueChange = { descriptions = it }, label = "Description", isMultiLine = true)
 
                     // Spacer agar tidak tertutup keyboard
                     Spacer(modifier = Modifier.height(150.dp))
@@ -207,14 +209,15 @@ fun AdminFlashSaleDialog(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    onSave(initial.copy(
+                    val updatedData = initial.copy(
                         name = name,
                         price = price,
                         stock = qty.toIntOrNull() ?: 0,
-                        desc = desc,
-                        startAt = isoFormatter.format(startDate) + "Z", // Pastikan format kembali ke ISO murni
+                        descriptions = descriptions,
+                        startAt = isoFormatter.format(startDate) + "Z",
                         endAt = isoFormatter.format(endDate) + "Z"
-                    ))
+                    )
+                    onSave(updatedData, selectedImageUri)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black),
                 modifier = Modifier.fillMaxWidth().height(48.dp),

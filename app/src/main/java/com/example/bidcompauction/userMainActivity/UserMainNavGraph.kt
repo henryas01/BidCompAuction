@@ -15,7 +15,7 @@ import data.viewmodel.CartViewModel
 
 object MainRoute {
     const val HOME = "home"
-    const val MY_BIDS = "my_bids" // Rute baru untuk daftar bid
+    const val MY_BIDS = "my_bids"
     const val CHECKOUT = "checkout"
     const val INVOICE = "invoice"
     const val PROFILE = "profile"
@@ -77,7 +77,7 @@ fun UserMainNavGraph(
         }
 
         composable(MainRoute.INVOICE) {
-            InvoiceScreen(onBack = { navController.popBackStack() }, onInvoiceClick = {})
+            InvoiceScreen(onBack = { navController.popBackStack() })
         }
 
         composable(MainRoute.PROFILE) {

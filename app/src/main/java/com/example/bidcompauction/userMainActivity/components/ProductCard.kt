@@ -31,7 +31,7 @@ fun ProductCard(
     p: AdminProductResponse,
     onAdd: () -> Unit
 ) {
-    val imageUrl = Constants.getFullImageUrl(p.images.firstOrNull())
+    val imageUrl = Constants.getFullImageUrl(p.images.lastOrNull())
 
     Card(
         shape = RoundedCornerShape(20.dp),

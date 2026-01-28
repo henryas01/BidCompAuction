@@ -41,9 +41,12 @@ fun FlashSaleItemCard(
     val timerText = String.format("%02d:%02d:%02d", hours, minutes, seconds)
 
     // Ambil URL Gambar (Asumsi images adalah List<String>)
-    val imageUrl = if (item.images.isNotEmpty()) {
-        Constants.getFullImageUrl(item.images[0])
-    } else null
+    val imageUrl = if (!item.images.isNullOrEmpty()) {
+        Constants.getFullImageUrl(item.images.lastOrNull())
+    } else {
+        null
+    }
+
 
     Card(
         modifier = Modifier
@@ -108,7 +111,7 @@ fun FlashSaleItemCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = item.desc, // Menggunakan .desc dari API
+                    text = item.descriptions ?: "", // Menggunakan .desc dari API
                     color = Color.White.copy(alpha = 0.5f),
                     fontSize = 10.sp,
                     maxLines = 2,

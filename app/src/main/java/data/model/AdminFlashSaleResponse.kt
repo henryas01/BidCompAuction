@@ -5,8 +5,8 @@ data class AdminFlashSaleResponse(
     val name: String,
     val price: Any, // Bisa String atau Int dari API
     val stock: Int,
-    val desc: String,
-    val images: List<String>,
+    val descriptions: String?, // Ubah ke String? agar aman jika null
+    val images: List<String>?, // WAJIB List<String>? agar tidak crash saat images: null
     val startAt: String,
     val endAt: String,
     val isActive: Boolean,

@@ -54,7 +54,11 @@ fun FlashSaleCard(
     val remainingMs by rememberRemainingTime(endEpoch)
     val ended = remainingMs <= 0L
     val countdown = if (ended) "ENDED" else formatCountdown(remainingMs)
-    val imageUrl = if (item.images.isNotEmpty()) Constants.getFullImageUrl(item.images[0]) else null
+    val imageUrl = if (!item.images.isNullOrEmpty()) {
+        Constants.getFullImageUrl(item.images.lastOrNull())
+    } else {
+        null
+    }
 
     Card(
         shape = RoundedCornerShape(24.dp),

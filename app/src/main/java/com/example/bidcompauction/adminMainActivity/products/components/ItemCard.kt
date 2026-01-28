@@ -33,11 +33,7 @@ fun ItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    // Alamat dasar server untuk gambar
-//    val baseUrl = "http://192.168.1.10:3000"
-//    val imageUrl = if (product.images.isNotEmpty()) "$baseUrl${product.images.first()}" else ""
-    val imageUrl = Constants.getFullImageUrl(product.images.firstOrNull())
-//    print("product.images, $product.images")
+    val imageUrl = Constants.getFullImageUrl(product.images.lastOrNull())
     Log.d("imageUrl = imageUrl", "URL Gambar: $imageUrl")
     Log.d("imageUrl = ItemCard", "URL Gambar: $product.images")
 

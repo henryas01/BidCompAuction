@@ -25,6 +25,8 @@ fun ProductsScreen(
     search: String,
     viewModel: ProductViewModel = viewModel()
 ) {
+
+    val context = androidx.compose.ui.platform.LocalContext.current
     val products by viewModel.products.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -79,7 +81,14 @@ fun ProductsScreen(
             open = showAddDialog,
             onDismiss = { showAddDialog = false },
             onSave = { request ->
-                viewModel.addProduct(request)
+                viewModel.addProduct(
+                    context = context,
+                    name = request.name,
+                    price = request.price.toLong(),
+                    stock = request.stock.toInt(),
+                    desc = request.desc,
+                    imageUri = request.imageUri // URI gambar dari picker
+                )
                 showAddDialog = false
             }
         )
@@ -89,13 +98,16 @@ fun ProductsScreen(
             open = editItem != null,
             initial = editItem,
             onDismiss = { editItem = null },
-            onSave = { updatedId, name, price, stock, desc ->
+            // FIX: Tambahkan parameter imageUri (uri) di sini
+            onSave = { updatedId, name, price, stock, desc, uri ->
                 viewModel.updateProduct(
+                    context = context, // Kirim context
                     id = updatedId,
                     name = name,
                     price = price,
                     stock = stock,
-                    desc = desc
+                    desc = desc,
+                    imageUri = uri // Kirim uri yang baru dipilih (bisa null jika tidak ganti)
                 )
                 editItem = null
             }

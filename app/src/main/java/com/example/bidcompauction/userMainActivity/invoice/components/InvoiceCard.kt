@@ -21,43 +21,38 @@ import com.example.bidcompauction.userMainActivity.UserMainUtils.formatRupiah
 import com.example.bidcompauction.userMainActivity.invoice.InvoiceStatus
 import com.example.bidcompauction.userMainActivity.invoice.InvoiceUi
 import com.example.bidcompauction.userMainActivity.invoice.TransactionType
+import data.model.UserPaymentInvoiceResponse
 
 @Composable
 fun InvoiceCard(
-    invoice: InvoiceUi,
+    data: UserPaymentInvoiceResponse,
     onClick: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            // Baris Atas: ID & Tipe Produk
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Menampilkan Invoice Number dari nested object
                 Text(
-                    text = invoice.id,
+                    text = data.invoice?.invoiceNumber ?: "Processing...",
                     color = Color.Gray,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 12.sp
                 )
 
-                // Label Tipe: BID atau DIRECT
                 Surface(
-                    color = if (invoice.type == TransactionType.BID)
-                        Color(0xFFFFD700).copy(alpha = 0.1f)
-                    else Color(0xFF00B0FF).copy(alpha = 0.1f),
+                    color = if (data.sourceType == "BID") Color(0xFFFFD700).copy(0.1f) else Color(0xFF00B0FF).copy(0.1f),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = if (invoice.type == TransactionType.BID) "BID WINNER" else "DIRECT BUY",
-                        color = if (invoice.type == TransactionType.BID) Color(0xFFFFD700) else Color(0xFF00B0FF),
+                        text = if (data.sourceType == "BID") "BID WINNER" else "DIRECT BUY",
+                        color = if (data.sourceType == "BID") Color(0xFFFFD700) else Color(0xFF00B0FF),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black
@@ -67,45 +62,37 @@ fun InvoiceCard(
 
             Spacer(Modifier.height(8.dp))
 
-            // Nama Produk (Highlight Utama)
+            // Nama produk bisa diambil dari field lain atau default text jika tidak tersedia di endpoint ini
             Text(
-                text = invoice.productName,
+                text = "Transaction #${data.id}",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                fontSize = 17.sp
             )
 
             Text(
-                text = "Purchased on ${invoice.date}",
+                text = "Paid on ${data.createdAt.take(10)}", // Ambil tanggal saja YYYY-MM-DD
                 color = Color.Gray,
                 fontSize = 12.sp
             )
 
             Spacer(Modifier.height(16.dp))
-            Divider(color = Color.White.copy(alpha = 0.05f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
             Spacer(Modifier.height(16.dp))
 
-            // Baris Bawah: Status Lunas & Total
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = Color(0xFF00FF85),
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF00FF85), modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Paid Success", color = Color(0xFF00FF85), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("PAID", color = Color(0xFF00FF85), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Text(
-                    text = formatRupiah(invoice.total),
+                    text = formatRupiah(data.amount.toLongOrNull() ?: 0L),
                     color = Color.White,
                     fontWeight = FontWeight.Black,
                     fontSize = 18.sp

@@ -9,6 +9,9 @@ import com.example.bidcompauction.data.model.SignupResponse
 import data.model.AdminFlashSaleResponse
 import data.model.AdminProductResponse
 import data.model.DeleteResponse
+import data.model.PaymentResponse
+import data.model.UserPaymentInvoiceResponse
+import data.viewmodel.PaymentValidationResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -52,12 +55,17 @@ interface ApiService {
         @Part image: MultipartBody.Part
     ): AdminProductResponse
 
+    @Multipart
     @PATCH("api/product/{id}")
     suspend fun updateProduct(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: Map<String, @JvmSuppressWildcards Any>
-    ): AdminProductResponse
+        @Part("name") name: RequestBody,
+        @Part("price") price: RequestBody,
+        @Part("stock") stock: RequestBody,
+        @Part("desc") desc: RequestBody,
+        @Part image: MultipartBody.Part? // Gunakan tanda tanya (?) agar opsional
+    ): Response<AdminProductResponse>
 
     @DELETE("api/product/{id}")
     suspend fun deleteProduct(
@@ -90,12 +98,20 @@ interface ApiService {
         @Part image: MultipartBody.Part
     ): AdminFlashSaleResponse
 
+    @Multipart
     @PATCH("api/flashsale/{id}")
-    suspend fun updateFlashSale(
+    suspend fun updateFlashSaleMultipart(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: Map<String, @JvmSuppressWildcards Any>
-    ): AdminFlashSaleResponse
+        @Part("name") name: RequestBody,
+        @Part("price") price: RequestBody,
+        @Part("stock") stock: RequestBody,
+        @Part("descriptions") descriptions: RequestBody,
+        @Part("startAt") startAt: RequestBody,
+        @Part("endAt") endAt: RequestBody,
+        @Part("isActive") isActive: RequestBody,
+        @Part image: MultipartBody.Part? // Key field sesuai backend, biasanya "images"
+    ): Response<AdminFlashSaleResponse>
 
     @DELETE("api/flashsale/{id}")
     suspend fun deleteFlashSale(
@@ -134,5 +150,33 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") bidId: Int
     ): Response<Unit>
+
+
+    @Multipart
+    @POST("api/payment")
+    suspend fun processPayment(
+        @Header("Authorization") token: String,
+        @Part("sourceType") sourceType: RequestBody,
+        @Part("sourceId") sourceId: RequestBody,
+        @Part images: MultipartBody.Part
+    ): Response<PaymentResponse>
+
+
+    @GET("api/payment")
+    suspend fun getAllPayments(
+        @Header("Authorization") token: String
+    ): Response<List<PaymentResponse>>
+
+    @POST("api/payment/{id}/validate")
+    suspend fun validatePayment(
+        @Header("Authorization") token: String,
+        @Path("id") paymentId: Int
+    ): Response<PaymentValidationResponse>
+
+
+    @GET("api/payment/invoice/me")
+    suspend fun getMyInvoices(
+        @Header("Authorization") token: String
+    ): Response<List<UserPaymentInvoiceResponse>>
 
 }

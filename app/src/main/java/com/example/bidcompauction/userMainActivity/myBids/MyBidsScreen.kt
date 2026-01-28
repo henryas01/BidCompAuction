@@ -15,11 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.userMainActivity.myBids.components.BidItemCard
 import com.example.bidcompauction.userMainActivity.myBids.components.EmptyBidsState
-import com.example.bidcompauction.userMainActivity.myBids.components.PaymentSheetContent
-import data.model.AdminFlashSaleResponse
+import com.example.bidcompauction.userMainActivity.components.PaymentSheetContent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bidcompauction.data.model.BidsResponse
 import data.viewmodel.BidsViewModel
+import androidx.compose.ui.Alignment
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,10 +32,10 @@ fun MyBidsScreen(
     val bidList by bidsViewModel.myBids.collectAsState()
     val isLoading by bidsViewModel.isLoading.collectAsState()
 
-    // UBAH: Gunakan BidsResponse sebagai state
     var selectedWinningBid by remember { mutableStateOf<BidsResponse?>(null) }
     val paymentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Trigger awal
     LaunchedEffect(Unit) {
         bidsViewModel.fetchMyBids()
     }
@@ -55,9 +56,8 @@ fun MyBidsScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(Color(0xFF0B0B0B))) {
             if (isLoading && bidList.isEmpty()) {
-                // Tampilkan loading jika data sedang diambil
                 CircularProgressIndicator(
-                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center),
                     color = Color(0xFFFFD700)
                 )
             } else if (bidList.isEmpty()) {
@@ -68,11 +68,13 @@ fun MyBidsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(bidList, key = { it.id }) { bid ->
-                        // Perhatian: BidItemCard perlu sedikit penyesuaian untuk model BidsResponse
                         BidItemCard(
                             bidResponse = bid,
                             onBidAgain = { onBidAgain(bid.flashSaleId.toString()) },
-                            onPayNow = { selectedWinningBid = bid } // Langsung set objek bid
+                            onPayNow = {
+                                // Hanya set jika status memungkinkan untuk bayar
+                                selectedWinningBid = bid
+                            }
                         )
                     }
                 }
@@ -87,8 +89,15 @@ fun MyBidsScreen(
                 scrimColor = Color.Black.copy(alpha = 0.8f)
             ) {
                 PaymentSheetContent(
-                    bid = selectedWinningBid!!,
-                    onDismiss = { selectedWinningBid = null }
+                    sourceId = selectedWinningBid!!.id,
+                    sourceType = "BID",
+                    title = selectedWinningBid!!.flashSale?.name ?: "Auction Item",
+                    price = selectedWinningBid!!.bidPrice.toLongOrNull() ?: 0L,
+                    onDismiss = {
+                        selectedWinningBid = null
+                        // Refresh data agar status berubah setelah upload bukti
+                        bidsViewModel.fetchMyBids()
+                    }
                 )
             }
         }

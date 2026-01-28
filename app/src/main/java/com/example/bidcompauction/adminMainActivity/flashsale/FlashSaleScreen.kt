@@ -18,6 +18,7 @@ import com.example.bidcompauction.adminMainActivity.flashsale.components.AdminAd
 import com.example.bidcompauction.adminMainActivity.flashsale.components.AdminFlashSaleDialog
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import data.model.AdminFlashSaleResponse
 import data.viewmodel.FlashSaleViewModel
@@ -31,6 +32,7 @@ fun FlashSaleScreen(
     search: String,
     flashSaleViewModel: FlashSaleViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val items by flashSaleViewModel.items.collectAsState()
     val isLoading by flashSaleViewModel.isLoading.collectAsState()
 
@@ -115,19 +117,20 @@ fun FlashSaleScreen(
         // B. Dialog Edit
         if (editItem != null) {
             AdminFlashSaleDialog(
-                open = true,
-                initial = editItem, // Mengirim AdminFlashSaleResponse
+                open = editItem != null,
+                initial = editItem,
                 onDismiss = { editItem = null },
-                onSave = { updatedResponse ->
-                    // FIX ISSUE #4: Mapping dari Response ke fungsi Update ViewModel
+                onSave = { updatedData, newImageUri ->
                     flashSaleViewModel.updateFlashSale(
-                        id = updatedResponse.id,
-                        name = updatedResponse.name,
-                        price = updatedResponse.price.toString().toDoubleOrNull()?.toLong() ?: 0L,
-                        stock = updatedResponse.stock,
-                        desc = updatedResponse.desc,
-                        startAt = updatedResponse.startAt,
-                        endAt = updatedResponse.endAt
+                        context = context,
+                        id = updatedData.id,
+                        name = updatedData.name,
+                        price = updatedData.price.toString().filter { it.isDigit() }.toLongOrNull() ?: 0L,
+                        stock = updatedData.stock,
+                        desc = updatedData.descriptions ?: "",
+                        startAt = updatedData.startAt,
+                        endAt = updatedData.endAt,
+                        imageUri = newImageUri
                     )
                     editItem = null
                 }

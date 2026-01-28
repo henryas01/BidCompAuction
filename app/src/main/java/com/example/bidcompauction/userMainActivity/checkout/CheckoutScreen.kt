@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bidcompauction.userMainActivity.UserMainUtils.formatRupiah
 import com.example.bidcompauction.userMainActivity.checkout.components.CartItemCard
-import com.example.bidcompauction.userMainActivity.myBids.components.PaymentSheetContent
+import com.example.bidcompauction.userMainActivity.components.PaymentSheetContent
 import data.model.AdminFlashSaleResponse // Import model API
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,18 +155,20 @@ fun CheckoutScreen(
                     name = "Total Checkout (${cartItems.size} Items)",
                     price = total.toString(),
                     images = emptyList(), // Bisa diisi logo keranjang jika perlu
-                    desc = "",
+                    descriptions = "",
                     isActive= false,
                     stock = 0,
                     startAt = "",
                     isExpired = false,
                     endAt = "",
                 )
-
-//                PaymentSheetContent(
-//                    bid = checkoutData,
-//                    onDismiss = { showPaymentSheet = false }
-//                )
+                PaymentSheetContent(
+                    sourceId = cartItems.firstOrNull()?.id?.toInt() ?: 0,
+                    sourceType = "PRODUCT",
+                    title = "Order for ${cartItems.size} items",
+                    price = total,
+                    onDismiss = { showPaymentSheet = false }
+                )
             }
         }
     }

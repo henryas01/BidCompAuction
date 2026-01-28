@@ -30,13 +30,6 @@ fun AdminBottomBar(
             icon = { Icon(Icons.Filled.Bolt, contentDescription = "Flash") },
             label = { Text("Flash") }
         )
-//        NavigationBarItem(
-//            selected = currentRoute == AdminRoute.WINNERS,
-//            onClick = { onNavigate(AdminRoute.WINNERS) },
-//            icon = { Icon(Icons.Filled.EmojiEvents, contentDescription = "Winners") },
-//            label = { Text("Winners") }
-//        )
-
 
         NavigationBarItem(
             selected = currentRoute == AdminRoute.BIDS,

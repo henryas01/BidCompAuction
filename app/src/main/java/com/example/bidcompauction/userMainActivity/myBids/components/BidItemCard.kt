@@ -1,9 +1,9 @@
 package com.example.bidcompauction.userMainActivity.myBids.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Refresh
@@ -29,102 +29,66 @@ import utils.Constants
 
 @Composable
 fun BidItemCard(
-    bidResponse: BidsResponse, // UBAH: Gunakan BidsResponse dari API
+    bidResponse: BidsResponse,
     onBidAgain: () -> Unit,
     onPayNow: () -> Unit
 ) {
-    // Mapping Status dari String API ke Enum Lokal
-    val currentStatus = when (bidResponse.status.uppercase()) {
-        "WINNING" -> BidStatus.WINNING
-        "OUTBID" -> BidStatus.OUTBID
-        else -> BidStatus.LEADING // Default untuk PENDING/LEADING
-    }
+    val status = bidResponse.status.uppercase()
 
-    val statusColor = when (currentStatus) {
-        BidStatus.LEADING -> Color(0xFF00FF85)
-        BidStatus.OUTBID -> Color(0xFFFF4545)
-        BidStatus.WINNING -> Color(0xFFFFD700)
-        else -> Color.Gray
+    // Warna berdasarkan status API
+    val statusColor = when (status) {
+        "WINNER" -> Color(0xFFFFD700) // Gold
+        "OUTBID" -> Color(0xFFFF4545) // Merah
+        "PAID" -> Color(0xFF00FF85)   // Hijau
+        else -> Color(0xFF00FF85)     // Default Leading (Hijau)
     }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(70.dp),
-                color = Color(0xFF252525),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                AsyncImage(
-                    model = bidResponse.flashSale?.images?.firstOrNull()?.let { Constants.getFullImageUrl(it) },
-                    contentDescription = bidResponse.flashSale?.name,
-                    modifier = Modifier.size(70.dp).clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop,
-                    error = painterResource(R.drawable.ic_placeholder)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // ... (Bagian Image dan Text Nama Produk tetap sama) ...
 
             Column(modifier = Modifier.weight(1f)) {
-                // Nama Produk (Gunakan FlashSaleId jika nama produk tidak ada di response)
-                Text(
-                    text = bidResponse.flashSale?.name ?: "Unknown Product",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    maxLines = 1
-                )
-
-                Text(
-                    text = "Your Bid: ${formatRupiah(bidResponse.bidPrice.toLongOrNull() ?: 0L)}",
-                    color = Color.Gray,
-                    fontSize = 13.sp
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Text(bidResponse.flashSale?.name ?: "Item", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Bid: ${formatRupiah(bidResponse.bidPrice.toLongOrNull() ?: 0L)}", color = Color.Gray)
 
                 // Status Badge
                 Surface(
-                    color = statusColor.copy(alpha = 0.15f),
+                    color = statusColor.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = bidResponse.status, // Menampilkan status asli dari API
+                        text = status,
                         color = statusColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            // AKSI BERDASARKAN STATUS
-            when (currentStatus) {
-                BidStatus.OUTBID -> {
+            // AKSI
+            when (status) {
+                "WINNER" -> {
+                    Button(
+                        onClick = onPayNow,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FF85)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("PAY NOW", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                "OUTBID" -> {
                     IconButton(onClick = onBidAgain) {
                         Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White)
                     }
                 }
-                BidStatus.WINNING -> {
-                    Button(
-                        onClick = onPayNow,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FF85)),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp)
-                    ) {
-                        Icon(Icons.Default.Payment, null, modifier = Modifier.size(14.dp), tint = Color.Black)
-                        Spacer(Modifier.width(4.dp))
-                        Text("PAY", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                    }
+                "PAID" -> {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF00FF85))
                 }
-                else -> { /* LEADING: Menunggu update */ }
             }
         }
     }

@@ -93,20 +93,58 @@ class FlashSaleViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun updateFlashSale(id: Int, name: String, price: Long, stock: Int, desc: String, startAt: String, endAt: String) {
+    fun updateFlashSale(
+        context: android.content.Context,
+        id: Int,
+        name: String,
+        price: Long,
+        stock: Int,
+        desc: String,
+        startAt: String,
+        endAt: String,
+        imageUri: Uri? // Terima URI gambar baru
+    ) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val body = mapOf(
-                    "name" to name,
-                    "price" to price,
-                    "stock" to stock,
-                    "desc" to desc,
-                    "startAt" to startAt,
-                    "endAt" to endAt
+                // Konversi String ke RequestBody
+                val namePart = name.toRequestBody("text/plain".toMediaTypeOrNull())
+                val pricePart = price.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val stockPart = stock.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val descPart = desc.toRequestBody("text/plain".toMediaTypeOrNull())
+                val startAtPart = startAt.toRequestBody("text/plain".toMediaTypeOrNull())
+                val endAtPart = endAt.toRequestBody("text/plain".toMediaTypeOrNull())
+                val isActivePart = "true".toRequestBody("text/plain".toMediaTypeOrNull())
+
+                // Konversi Uri ke MultipartBody.Part (Hanya jika ada gambar baru)
+                val imagePart = imageUri?.let { uri ->
+                    val file = FileUtil.getFileFromUri(context, uri)
+                    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    MultipartBody.Part.createFormData("images", file.name, requestFile)
+                }
+
+                // Panggil API dengan format Multipart
+                val response = RetrofitClient.api.updateFlashSaleMultipart(
+                    token = getAuthHeader(),
+                    id = id,
+                    name = namePart,
+                    price = pricePart,
+                    stock = stockPart,
+                    descriptions = descPart,
+                    startAt = startAtPart,
+                    endAt = endAtPart,
+                    isActive = isActivePart,
+                    image = imagePart // Bisa null jika tidak ganti gambar
                 )
-                RetrofitClient.api.updateFlashSale(getAuthHeader(), id, body)
-                fetchFlashSales()
-            } catch (e: Exception) { e.printStackTrace() }
+
+                if (response.isSuccessful) {
+                    fetchFlashSales()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
